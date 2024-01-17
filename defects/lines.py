@@ -65,16 +65,16 @@ def add_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightnes
 '''
 img = cv2.imread("images/image4.jpg")
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-x, y = 22, 14
-vertical = False
-dark = False
-brightness = 98
-line_amplitude =13
-mask_width = 8
-frequency = 0.08
-gamma = 0.2
-variance = 0.59
-noise = True
+x, y = 2, 1
+vertical = True
+dark = True
+brightness = 100
+line_amplitude =95
+mask_width =52
+frequency = 0.3
+gamma = 0.002
+variance = 0.5
+noise = False
 image = add_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
 #image = add_noise(gray, prob=0.9)
 
@@ -82,27 +82,40 @@ image = add_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask
 image = cv2.resize(image, (960, 960)) 
 height, width = image.shape
 
-lambd = frequency*mask_width*width/100
-w = mask_width*width/200
-n = int(w/lambd)
+lambd = frequency*mask_width
+w = mask_width/2
+n = int(w/lambd)+1
 X_centers = []
 print(n)
-if n<=3 and mask_width>30:
+Xc = x+mask_width/2
+Yc = y + line_amplitude/2
+if variance<0.8:
+    mask_width = variance*mask_width*1.1
+else:
+    mask_width = variance*mask_width
+if gamma-variance>0.2:
+    line_amplitude = variance*line_amplitude/gamma
+if n<=5 and mask_width>10:
     for i in range(n+1):
-        xcp = lambd*i+lambd/4
-        print(np.exp(-(xcp**2)*0.5/(variance*w)**2))
-        if np.exp(-(xcp**2)*0.5/(variance*w)**2) > 0.4 and xcp<w:
-            X_centers.append(xcp+w-lambd/4)
+        xcp = lambd*i-lambd/4
+        print(np.exp(-((xcp**2)*0.5/(variance*w*2)**2)))
+        print("xp")
+        if np.exp(-(xcp**2)*0.5/(variance*w*2)**2) >= 0.45 and xcp<w:
+            X_centers.append(xcp+lambd/2)
 
-        xcm = -lambd*(i+1)+lambd/4
+        xcm = -lambd*i+lambd/4
         print(np.exp(-(xcm**2)*0.5/((variance*w)**2)))
-        if np.exp(-(xcm**2)*0.5/(variance*w)**2) > 0.4 and -xcm<w:
-            X_centers.append(xcm+w-lambd/4)
+        print("xm")
+        if np.exp(-(xcm**2)*0.5/(variance*w*2)**2) >= 0.45 and -xcm<w:
+            X_centers.append(xcm)
+    print(mask_width/2, lambd/4)
+
 
     for xc in X_centers:
-        cv2.rectangle(image, (int(x*width/100 + xc), int(y*height/100)), (int((x)*width/100 + xc + np.where(lambd/2>w*2-xc, w*2-xc, lambd/2)), int((y+line_amplitude)*height/100)), color=(255,255,255), thickness=2)
+        cv2.rectangle(image, (int((Xc+xc-lambd/4)*width/100), int((Yc-line_amplitude/2)*height/100)), (int((Xc+xc+lambd/4)*width/100), int((Yc+line_amplitude/2)*height/100)), color=(255,255,255), thickness=2)
+
 else:
-    cv2.rectangle(image, (int(x*width/100), int(y*height/100)), (int((x)*width/100+w*2), int((y+line_amplitude)*height/100)), color=(255,255,255), thickness=2)
+    cv2.rectangle(image, (int((Xc-mask_width/2)*width/100), int((Yc-line_amplitude/2)*height/100)), (int((Xc+mask_width/2)*width/100), int((Yc+line_amplitude/2)*height/100)), color=(255,255,255), thickness=2)
 
 
 
