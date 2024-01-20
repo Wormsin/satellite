@@ -48,26 +48,6 @@ func image_search(file *os.File, offset int64) (width uint32, height uint32, bit
 		offset = offset+int64(lenght)
 	}
 }
-func rename_files(dir_path string) int {
-	files, err := os.ReadDir(dir_path)
-	if err != nil {
-		fmt.Println("Error reading directory:", err)
-		return 0
-	}
-
-	for i, file := range files {
-		oldName := filepath.Join(dir_path, file.Name())
-		newName := filepath.Join(dir_path, fmt.Sprintf("file%d.L15", i+1))
-		if oldName == newName {
-			return len(files)
-		}
-		err := os.Rename(oldName, newName)
-		if err != nil {
-			fmt.Printf("Error renaming file %s: %v\n", oldName, err)
-		}
-	}
-	return len(files)
-}
 
 func main() {
 	dir_path := "L15"
