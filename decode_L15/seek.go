@@ -135,7 +135,7 @@ func main() {
 				return
 			}
 
-			fmt.Println("Image successfully saved to", outputImagePath)
+			//fmt.Println("Image successfully saved to", outputImagePath)
 
 		}
 
