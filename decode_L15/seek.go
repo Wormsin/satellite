@@ -139,5 +139,11 @@ func main() {
 
 		}
 
+		err = os.Remove(filePath)
+		if err != nil {
+			fmt.Println("Error deleting file:", err)
+			return
+	}
+
 	}
 }
