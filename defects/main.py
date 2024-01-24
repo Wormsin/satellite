@@ -30,7 +30,7 @@ def randv_big_lines():
         x, y = y, x
     y = int(y*100)
     x = int(x*100)
-    brightness = int(np.random.uniform(0.5, 1)*100)
+    brightness = int(np.random.uniform(0.4, 1)*100)
     frequency = np.random.uniform(0.01, 0.8)
     variance = np.random.uniform(0.3, 1)
     gamma = np.random.uniform(0, 0.02)
@@ -45,7 +45,7 @@ def randv_packages():
         x, y = y, x
     y = int(y*100)
     x = int(x*100)
-    brightness = int(np.random.uniform(0.5, 1)*100)
+    brightness = int(np.random.uniform(0.4, 1)*100)
     frequency = np.random.uniform(0.01, 0.2)
     variance = np.random.uniform(0.3, 1)
     gamma = np.random.uniform(0, 0.6)
@@ -140,7 +140,7 @@ def display_img(image, bbox_arr):
 
 IMG_PATH = 'dataset/images/train'
 LABELS_PATH = 'dataset/labels/train'
-SOURCE = "validation_data"
+SOURCE = "../../Data/unique"
 
 def main():
     name_shift = 0
