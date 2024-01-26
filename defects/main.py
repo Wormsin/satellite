@@ -2,7 +2,7 @@ import os
 from shutil import copy, rmtree
 import cv2
 import numpy as np
-from lines import add_lines
+from lines import multiple_stripes, blur_lines, dark_noise_lines, striped_lines, basic_lines
 import albumentations as A
 
 def save_data(num, image, bbox_arr, cls):
@@ -116,7 +116,7 @@ def process_img(image, defect_func, num, num_cycles_defects, augmentation, displ
     for j in range(num_cycles_defects):
         location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise = defect_func()
         bbox_arr+= make_bbox(location[0], location[1], mask_width, line_amplitude, vertical, variance, frequency, gamma)
-        image = add_lines(image, location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+        image = basic_lines(image, location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
     if display: display_img(image, bbox_arr)
     save_data(num, image, bbox_arr, 0)
     for i in range(augmentation):
@@ -140,7 +140,7 @@ def display_img(image, bbox_arr):
 
 IMG_PATH = 'dataset/images/train'
 LABELS_PATH = 'dataset/labels/train'
-SOURCE = "../../Data/valdata50"
+SOURCE = "images"
 
 def main():
     name_shift = 0
@@ -162,8 +162,8 @@ def main():
         if gray.shape[0] > 3000:
             gray = cv2.resize(gray, (1080, 1080)) 
 
-        #name_shift += process_img(gray, randv_big_lines, num, 0, 2, True)
-        
+        name_shift += process_img(gray, randv_big_lines, num, 1, 0, True)
+        '''
         if num<=num_images:
             num_cycles_defects = np.random.randint(1, 3)
             name_shift += process_img(gray, randv_big_lines, num, num_cycles_defects, 0, False)
@@ -173,7 +173,7 @@ def main():
         else:
             num_cycles_defects = np.random.randint(1, 5)
             name_shift += process_img(gray, randv_destroyed_pixels, num, num_cycles_defects, 0, False)
-
+        '''
 
 if __name__ == "__main__":
     main()

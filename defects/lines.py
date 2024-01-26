@@ -218,6 +218,6 @@ def test():
     cv2.destroyAllWindows()
 
 
-test()
+#test()
 
     
