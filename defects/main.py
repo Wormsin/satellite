@@ -140,7 +140,7 @@ def display_img(image, bbox_arr):
 
 IMG_PATH = 'dataset/images/train'
 LABELS_PATH = 'dataset/labels/train'
-SOURCE = "../../Data/unique"
+SOURCE = "../../Data/valdata50"
 
 def main():
     name_shift = 0
