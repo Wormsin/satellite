@@ -32,147 +32,110 @@ def add_noise(img, prob=0.5):
     img[noise==1] = 255
     return img
 
-def add_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
-              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool, blur:bool):
-    image0 = np.copy(img)
+def process_values(img, location:tuple, line_amplitude:float, 
+              mask_width: float):
     height, width = img.shape
     line_amplitude = int(height*(line_amplitude-1)//100)
     mask_width = int(width*(mask_width-1)//100)
     x = location[0]*width//100
     y = location[1]*height//100
+    return x, y, line_amplitude, mask_width
+    
+def make_mask(line_amplitude, mask_width, frequency, gamma, variance, noise=False, vertical=True):
     mask = gaussian_intensity_lines(line_amplitude=line_amplitude, mask_width=mask_width, frequency=frequency, gamma=gamma, variance=variance)
     if noise:
         mask = noise4lines(mask, prob = 0.4)
-    mask[mask<0.001] = 0
     if vertical:
         mask = mask.T
     line_y, line_x = mask.shape
-    
-    if not dark:
-        bw_mask = ((mask*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask
-        bw_mask[bw_mask<0] =0 
-        bw_mask = bw_mask.astype(np.uint8)
-        img[y:y+line_y, x:x+line_x]+=bw_mask
-    else:
-        bw_mask = (((1-mask)*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask*(-1)
-        bw_mask[bw_mask<0] =0 
-        bw_mask = bw_mask.astype(np.uint8)
-        img[y:y+line_y, x:x+line_x]-=bw_mask
-    
-    img[image0==0] = 0
-    return img
+    return mask, line_y, line_x
 
-def mixed_mask(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
-              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool, blur:bool):
-    image0 = np.copy(img)
-    height, width = img.shape
-    line_amplitude = int(height*(line_amplitude-1)//100)
-    mask_width = int(width*(mask_width-1)//100)
-    x = location[0]*width//100
-    y = location[1]*height//100
-    mask1 = gaussian_intensity_lines(line_amplitude=line_amplitude, mask_width=mask_width, frequency=frequency, gamma=gamma, variance=variance)
-    mask2 = gaussian_intensity_lines(line_amplitude=mask_width, mask_width=line_amplitude, frequency=frequency/100, gamma=gamma, variance=variance)
-    mask1 = mask1.T
-    mask2+=1
-    mask2[mask2==2] = 0
-    mask = mask1*mask2
-    mask[mask<0] = 0
-    mask[mask>1] = 1
-    cv2.imshow("mask1", mask)
-    cv2.waitKey(0) 
-    line_y, line_x = mask.shape
-
+def add_light_lines(x, y, line_x, line_y, mask, img, brightness):
     bw_mask = ((mask*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask
     bw_mask[bw_mask<0] =0 
     bw_mask = bw_mask.astype(np.uint8)
     img[y:y+line_y, x:x+line_x]+=bw_mask
-    
-    mask+=1
-    mask[mask>1.2]=0
-    mask1[mask1<0.5] = 0
-    mask1[mask1>0.5] = 1
-    mask*=mask1
-    mask[mask>0.5] = 1
-    if blur:
-        ksize = int(np.ceil(min(mask_width, line_amplitude)/100))
-        mask = cv2.blur(mask, (ksize, ksize))
-    cv2.imshow("mask2", mask)
-    cv2.waitKey(0) 
+    return img
 
+def add_dark_lines(x, y, line_x, line_y, mask, img, brightness):
     bw_mask = (((1-mask)*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask*(-1)
     bw_mask[bw_mask<0] =0 
     bw_mask = bw_mask.astype(np.uint8)
     img[y:y+line_y, x:x+line_x]-=bw_mask
-
-    img[image0==0] = 0
     return img
 
-def dark_noise(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
+def basic_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
               mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
-    image0 = np.copy(img)
-    height, width = img.shape
-    line_amplitude = int(height*(line_amplitude-1)//100)
-    mask_width = int(width*(mask_width-1)//100)
-    x = location[0]*width//100
-    y = location[1]*height//100
-    mask= gaussian_intensity_lines(line_amplitude=line_amplitude, mask_width=mask_width, frequency=frequency, gamma=gamma, variance=variance)
-    mask0 = np.copy(mask)
-    if noise:
-        mask = noise4lines(mask, prob = 0.4)
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    mask, line_y, line_x = make_mask(line_amplitude, mask_width, frequency, gamma, variance, noise, vertical)
     mask[mask<0.001] = 0
-    if vertical:
-        mask = mask.T
-        mask0 = mask0.T
-    line_y, line_x = mask.shape
+    space = np.copy(img)
+    if dark:
+        img = add_dark_lines(x, y, line_x, line_y, mask, img, brightness)
+    else:
+        img = add_light_lines(x, y, line_x, line_y, mask, img, brightness)
+    img[space==0] = 0
+    return img
 
-    bw_mask = ((mask*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask
-    bw_mask[bw_mask<0] =0 
-    bw_mask = bw_mask.astype(np.uint8)
-    img[y:y+line_y, x:x+line_x]+=bw_mask
+def striped_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
+              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
+    space = np.copy(img)
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    w_mask, _, _ = make_mask(line_amplitude, mask_width, frequency, gamma, variance, noise, vertical)
+    mask, line_y, line_x = make_mask(mask_width, line_amplitude, frequency/100, gamma, variance, noise, not vertical)
+    mask+=1
+    mask[mask==2] = 0
+    mask = w_mask*mask
+    mask[mask<0] = 0
+    mask[mask>1] = 1
+    img = add_light_lines(x, y, line_x, line_y, mask, img, brightness)
+    mask+=1
+    mask[mask>1.2]=0
+    w_mask[w_mask<=0.5] = 0
+    w_mask[w_mask>0.5] = 1
+    mask*=w_mask
+    mask[mask>0.5] = 1
+    ksize = int(np.ceil(min(mask_width, line_amplitude)/100))
+    ksize += (ksize+1)%2
+    mask = cv2.blur(mask, (ksize, ksize))
+    img = add_dark_lines(x, y, line_x, line_y, mask, img, brightness)
+    img[space==0] = 0
+    return img
 
-    mask2 = mask + 1
-    mask2[mask2>1.2]=0
-    mask2*=mask0
-    mask2[mask2<0.5] = 0
-    cv2.imshow("mask2", mask2)
-    cv2.waitKey(0)
-
-    bw_mask = (((1-mask2)*255-img[y:y+line_y, x:x+line_x])*brightness//100)*mask2*(-1)
-    bw_mask[bw_mask<0] =0 
-    bw_mask = bw_mask.astype(np.uint8)
-    img[y:y+line_y, x:x+line_x]-=bw_mask
-
-    img[image0==0] = 0
+def dark_noise_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
+              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
+    space = np.copy(img)
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    mask0, line_y, line_x = make_mask(line_amplitude, mask_width, frequency, gamma, variance, False, vertical)
+    mask, _, _ = make_mask(line_amplitude, mask_width, frequency, gamma, variance, True, vertical)
+    mask0[mask0<0.001] = 0
+    mask[mask<0.001] = 0
+    img = add_light_lines(x, y, line_x, line_y, mask, img, brightness)
+    mask+= 1
+    mask[mask>1.2]=0
+    mask*=mask0
+    mask[mask<0.5] = 0
+    img = add_dark_lines(x, y, line_x, line_y, mask, img, brightness)
+    img[space==0] = 0
     return img
 
 def blur_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
               mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
-    image0 = np.copy(img)
-    height, width = img.shape
-    line_amplitude = int(height*(line_amplitude-1)//100)
-    mask_width = int(width*(mask_width-1)//100)
-    x = location[0]*width//100
-    y = location[1]*height//100
-    mask= gaussian_intensity_lines(line_amplitude=line_amplitude, mask_width=mask_width, frequency=frequency, gamma=gamma, variance=variance)
-    if vertical:
-        mask = mask.T
-    line_y, line_x = mask.shape
-
+    space = np.copy(img)
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    mask, line_y, line_x = make_mask(line_amplitude, mask_width, frequency, gamma, variance, noise, vertical)
     ksize = int(np.ceil(min(mask_width, line_amplitude)/10))
     ksize += (ksize+1)%2
     sub_img = img[y:y+line_y, x:x+line_x]
     sub_img[mask>0.5] = cv2.GaussianBlur(sub_img, (ksize, ksize), int(ksize/2))[mask>0.5]
     img[y:y+line_y, x:x+line_x] = sub_img
-
-    cv2.imshow("mask1", sub_img)
-    cv2.waitKey(0)
-    img[image0==0] = 0
+    img[space==0] = 0
     return img
 
 def test():
     img = cv2.imread("images/image8.jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    x, y = 50, 60
+    x, y = 50, 30
     vertical = True
     dark = False
     brightness = 100
@@ -182,7 +145,6 @@ def test():
     gamma = 0.4
     variance = 1
     noise = False
-    blur = True
     image = blur_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
     #image = add_noise(gray, prob=0.9)
 
@@ -234,4 +196,5 @@ def test():
 
 
 test()
+
     
