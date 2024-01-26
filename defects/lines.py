@@ -32,6 +32,13 @@ def add_noise(img, prob=0.5):
     img[noise==1] = 255
     return img
 
+def add_blur(img, x, y, line_x, line_y, mask_width, line_amplitude):
+    ksize = int(np.ceil(min(mask_width, line_amplitude)/100))
+    ksize += (ksize+1)%2
+    sub_img = img[y:y+line_y, x:x+line_x]
+    img[y:y+line_y, x:x+line_x]= cv2.GaussianBlur(sub_img, (ksize, ksize), int(ksize/2))
+    return img
+
 def process_values(img, location:tuple, line_amplitude:float, 
               mask_width: float):
     height, width = img.shape
@@ -132,23 +139,43 @@ def blur_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightne
     img[space==0] = 0
     return img
 
+def multiple_stripes(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
+              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
+    x, y = location
+    n = 10
+    for i in np.arange(-n, n, 2):
+        if i!=0:
+            if vertical:
+                x=location[0]+mask_width//i
+            else:
+                y= location[1]+mask_width//i
+        img = basic_lines(img, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    line_y = line_amplitude
+    line_x = mask_width + mask_width//2
+    x-=mask_width//2
+    if not vertical:
+        y-=mask_width//2
+        x+=mask_width//2
+        line_y, line_x = line_x, line_y
+    img = add_blur(img, x, y, line_x, line_y, mask_width, line_amplitude)
+    return img 
+    
 def test():
     img = cv2.imread("images/image8.jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    x, y = 50, 30
+    x, y = 50, 60
     vertical = True
     dark = False
-    brightness = 100
+    brightness = 30
     line_amplitude =40
-    mask_width =10
-    frequency = 0.5
-    gamma = 0.4
+    mask_width =5
+    frequency = 0.005
+    gamma = 0
     variance = 1
     noise = False
-    image = blur_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
-    #image = add_noise(gray, prob=0.9)
-
-
+    image = multiple_stripes(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+    
     image = cv2.resize(image, (960, 960)) 
     height, width = image.shape
 
@@ -180,17 +207,13 @@ def test():
                 X_centers.append(xcm)
         print(mask_width/2, lambd/4)
 
-
         for xc in X_centers:
             cv2.rectangle(image, (int((Xc+xc-lambd/4)*width/100), int((Yc-line_amplitude/2)*height/100)), (int((Xc+xc+lambd/4)*width/100), int((Yc+line_amplitude/2)*height/100)), color=(255,255,255), thickness=2)
 
     else:
         cv2.rectangle(image, (int((Xc-mask_width/2)*width/100), int((Yc-line_amplitude/2)*height/100)), (int((Xc+mask_width/2)*width/100), int((Yc+line_amplitude/2)*height/100)), color=(255,255,255), thickness=2)
 
-
-
     cv2.imshow("image", image)
-    #cv2.imshow("mask", mask)
     cv2.waitKey(0) 
     cv2.destroyAllWindows()
 
