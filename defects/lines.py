@@ -186,14 +186,14 @@ def test():
     x, y = 50, 60
     vertical = True
     dark = False
-    brightness = 30
+    brightness = 100
     line_amplitude =40
-    mask_width =50
-    frequency = 0.005
+    mask_width =10
+    frequency = 0.5
     gamma = 0
     variance = 1
     noise = False
-    image = dot_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+    image = striped_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
     
     image = cv2.resize(image, (960, 960)) 
     height, width = image.shape
@@ -236,7 +236,6 @@ def test():
     cv2.waitKey(0) 
     cv2.destroyAllWindows()
 
-
-test()
+#test()
 
     

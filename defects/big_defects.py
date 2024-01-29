@@ -11,7 +11,10 @@ def add_blur(img, Xmin, Ymin, Xmax, Ymax):
     ksize += (ksize+1)%2
     sub_img = img[y:y+y_h, x:x+x_w]
     img[y:y+y_h, x:x+x_w]= cv2.GaussianBlur(sub_img, (ksize, ksize), int(ksize/2))
-    return img
+    yc = y+y_h/2
+    xc = x+x_w/2
+    bbox = [[xc/width, yc/height, x_w/width, y_h/height]]
+    return img, bbox
 
 def planet_shift(image):
     height, width = image.shape
@@ -37,16 +40,23 @@ def planet_shift(image):
         sign = 1
     else:
         sign = -1
+    xc = width/2
+    yc = height/2 + sign*radius + sign*shift*height/(2*2*(shift+2))
+    mw = 2*radius
+    mh = shift*height/(2*2*(shift+2))
     px, py = 2, 2+shift*sign
     if not vertical:
+        xc, yc = yc, xc
         px, py = py, px
+        mw, mh = mh, mw
     center_coordinates = (int(width/px), int(height/py))
     mask = np.zeros(image.shape, dtype=np.uint8)
     color = (1, 1, 1)
     thickness = -1
     mask = cv2.circle(mask, center_coordinates, radius, color, thickness)
     image*=mask
-    return image
+    bbox = [[xc/width, yc/height, mw/width, mh/height]]
+    return image, bbox
 
 def double_contours(image):
     edged = cv2.Canny(image, 100, 450) 
@@ -54,7 +64,8 @@ def double_contours(image):
     sub_img= image*dilation
     sub_img = cv2.blur(sub_img, (10, 10))
     image[dilation==255]=sub_img[dilation==255]//4
-    return image
+    bbox = [[0.5, 0.5, 1, 1]]
+    return image, bbox
 
 def rm_half(img):
     height, width = img.shape
@@ -62,7 +73,8 @@ def rm_half(img):
     for y in range(height):
         xr = int(np.random.normal(0, 30))
         img[y, 0:loc+xr] = 0
-    return img
+    bbox = [[(loc+30)/(2*width), 0.5, loc/width, 1]]
+    return img, bbox
 
 def darken_half(img):
     height, width = img.shape
@@ -70,7 +82,8 @@ def darken_half(img):
     for y in range(height):
         xr = int(np.random.normal(0, 30))
         img[y, 0:loc+xr]//=2
-    return img
+    bbox = [[(loc+30)/(2*width), 0.5, loc/width, 1]]
+    return img, bbox
 
 def disk_defect(image):
     arti = np.random.randint(0, 2)
