@@ -2,7 +2,7 @@ import os
 from shutil import copy, rmtree
 import cv2
 import numpy as np
-from lines import multiple_stripes, blur_lines, dark_noise_lines, striped_lines, basic_lines
+from lines import multiple_stripes, blur_lines, dark_noise_lines, striped_lines, basic_lines, add_blur
 import albumentations as A
 
 def save_data(num, image, bbox_arr, cls):
@@ -18,6 +18,27 @@ def save_data(num, image, bbox_arr, cls):
     else:
         file = open(bbox_path, 'a')
         file.close()
+
+def randv_mixed_lines(conditions):
+    Xmin, Ymin, Xmax, Ymax = conditions
+    noise = False
+    vertical, dark = np.random.rand(2)>=0.5
+    if not vertical:
+        Xmin, Ymin = Ymin, Xmin
+        Xmax, Ymax = Ymax, Xmax
+    x = np.random.uniform(Xmin/100, Xmax/100)
+    y  = np.random.uniform(Ymin/100, Ymax/100)
+    line_amplitude = int(np.random.uniform(0.05, Ymax/100-y)*100)
+    mask_width = int(np.random.uniform(0.2, Xmax/100-x)*100)
+    if not vertical:
+        x, y = y, x
+    y = int(y*100)
+    x = int(x*100)
+    brightness = int(np.random.uniform(0.8, 1)*100)
+    frequency = np.random.uniform(0.5, 0.8)
+    variance = 1
+    gamma = np.random.uniform(0, 0.02)
+    return (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise
 
 def randv_big_lines():
     noise = False
@@ -111,12 +132,16 @@ def make_bbox(x, y, mask_width, line_amplitude, vertical, variance, frequency, g
         bbox.append([Xc/100, Yc/100, mask_width/100, line_amplitude/100])
     return bbox
 
-def process_img(image, defect_func, num, num_cycles_defects, augmentation, display):
+def process_img(image, defect_func, type_lines_func, blur, num, num_cycles_defects, augmentation, display, conditions = []):
     bbox_arr = []
     for j in range(num_cycles_defects):
-        location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise = defect_func()
+        location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise = defect_func(conditions) if conditions!=[] else defect_func()
         bbox_arr+= make_bbox(location[0], location[1], mask_width, line_amplitude, vertical, variance, frequency, gamma)
-        image = basic_lines(image, location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+        image = type_lines_func(image, location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+    if blur: 
+        height, width = image.shape
+        x, y, w, h =  conditions[0]*width/100, conditions[1]*height/100, (conditions[2]-conditions[0])*width/100, (conditions[3]-conditions[1])*height/100
+        add_blur(image, int(x), int(y), int(w), int(h), int(w), int(h))
     if display: display_img(image, bbox_arr)
     save_data(num, image, bbox_arr, 0)
     for i in range(augmentation):
@@ -162,7 +187,8 @@ def main():
         if gray.shape[0] > 3000:
             gray = cv2.resize(gray, (1080, 1080)) 
 
-        name_shift += process_img(gray, randv_big_lines, num, 1, 0, True)
+        name_shift += process_img(gray, randv_mixed_lines, basic_lines, True, num, 15, 0, False, conditions=[50, 2, 80, 60])
+        
         '''
         if num<=num_images:
             num_cycles_defects = np.random.randint(1, 3)

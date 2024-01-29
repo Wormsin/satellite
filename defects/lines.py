@@ -33,7 +33,7 @@ def add_noise(img, prob=0.5):
     return img
 
 def add_blur(img, x, y, line_x, line_y, mask_width, line_amplitude):
-    ksize = int(np.ceil(min(mask_width, line_amplitude)/100))
+    ksize = int(np.ceil(min(mask_width, line_amplitude)/70))
     ksize += (ksize+1)%2
     sub_img = img[y:y+line_y, x:x+line_x]
     img[y:y+line_y, x:x+line_x]= cv2.GaussianBlur(sub_img, (ksize, ksize), int(ksize/2))
@@ -160,6 +160,25 @@ def multiple_stripes(img: np.uint, location:tuple, vertical: bool, dark:bool, br
         line_y, line_x = line_x, line_y
     img = add_blur(img, x, y, line_x, line_y, mask_width, line_amplitude)
     return img 
+
+def dot_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightness: int, line_amplitude:float, 
+              mask_width: float, frequency: int, gamma:float, variance:float, noise:bool):
+    space = np.copy(img)
+    density = np.random.randint(10, 30)
+    N = max(line_amplitude, mask_width)*density
+    x, y, line_amplitude, mask_width = process_values(img, location, line_amplitude, mask_width)
+    if not vertical:
+        mask_width, line_amplitude = line_amplitude, mask_width
+    for i in range(N):
+        y_coord=np.random.randint(0, line_amplitude - 1) 
+        x_coord=np.random.randint(0, mask_width - 1)
+        raw = np.random.randint(3, 6)
+        col = np.random.randint(3, 5)
+        for r in range(raw):
+            for c in range(col):
+                img[y+y_coord+r][x+x_coord+c] = (np.random.rand()>=0.5)*255
+    img[space==0] = 0
+    return img 
     
 def test():
     img = cv2.imread("images/image8.jpg")
@@ -169,12 +188,12 @@ def test():
     dark = False
     brightness = 30
     line_amplitude =40
-    mask_width =5
+    mask_width =50
     frequency = 0.005
     gamma = 0
     variance = 1
     noise = False
-    image = multiple_stripes(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
+    image = dot_lines(gray, (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
     
     image = cv2.resize(image, (960, 960)) 
     height, width = image.shape
@@ -218,6 +237,6 @@ def test():
     cv2.destroyAllWindows()
 
 
-#test()
+test()
 
     
