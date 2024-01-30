@@ -3,19 +3,65 @@ import numpy as np
 import albumentations as A
 
 
+
+def randv_freq_lines():
+    noise = False
+    vertical, dark = np.random.rand(2)>=0.5
+    x, y = np.random.uniform(0.3, 0.65, 2)
+    line_amplitude = int(np.random.uniform(0.05, 1-y)*100)
+    mask_width = int(np.random.uniform(0.1, 0.3)*100)
+    if not vertical:
+        x, y = y, x
+    y = int(y*100)
+    x = int(x*100)
+    brightness = int(np.random.uniform(0.7, 1)*100)
+    frequency = np.random.uniform(0.01, 0.05)
+    variance = np.random.uniform(0.6, 1)
+    gamma = np.random.uniform(0.3, 0.6)
+    return (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise
+
+def randv_middle_lines():
+    noise = False
+    vertical, dark = np.random.rand(2)>=0.5
+    x, y = np.random.uniform(0.1, 0.65, 2)
+    line_amplitude = int(np.random.uniform(0.05, 1-y)*100)
+    mask_width = int(np.random.uniform(0.3, 1-x)*100)
+    if not vertical:
+        x, y = y, x
+    y = int(y*100)
+    x = int(x*100)
+    brightness = int(np.random.uniform(0.7, 1)*100)
+    frequency = np.random.uniform(0.01, 0.1)
+    variance = np.random.uniform(0.6, 1)
+    gamma = np.random.uniform(0.3, 0.6)
+    return (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise
+
+def randv_single_middle_lines():
+    noise = False
+    vertical, dark = np.random.rand(2)>=0.5
+    x, y = np.random.uniform(0.1, 0.65, 2)
+    line_amplitude = int(np.random.uniform(0.05, 1-y)*100)
+    mask_width = int(np.random.uniform(0.05, 0.25)*100)
+    if not vertical:
+        x, y = y, x
+    y = int(y*100)
+    x = int(x*100)
+    brightness = int(np.random.uniform(0.7, 1)*100)
+    frequency = np.random.uniform(0.08, 0.5)
+    variance = np.random.uniform(0.8, 1)
+    gamma = np.random.uniform(0.3, 0.6)
+    return (x, y), vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise
+
 def randv_mixed_lines(conditions):
     Xmin, Ymin, Xmax, Ymax = conditions
     noise = False
     vertical, dark = np.random.rand(2)>=0.5
     if not vertical:
-        Xmin, Ymin = Ymin, Xmin
-        Xmax, Ymax = Ymax, Xmax
-    x = np.random.uniform(Xmin/100, Xmax/100)
-    y  = np.random.uniform(Ymin/100, Ymax/100)
+        Xmin, Ymin, Xmax, Ymax = Ymin, Xmin, Ymax, Xmax
+    x = np.random.uniform(Xmin/100, Xmax/100-0.2)
+    y  = np.random.uniform(Ymin/100, Ymax/100-0.2)
     line_amplitude = int(np.random.uniform(0.05, Ymax/100-y)*100)
     mask_width = int(np.random.uniform(0.2, Xmax/100-x)*100)
-    if not vertical:
-        x, y = y, x
     y = int(y*100)
     x = int(x*100)
     brightness = int(np.random.uniform(0.8, 1)*100)

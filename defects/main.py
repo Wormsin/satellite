@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import os
-from lines import multiple_stripes, blur_lines, dark_noise_lines, striped_lines, basic_lines
-from params import make_bbox, augment
+from lines import multiple_stripes, blur_lines, dark_noise_lines, striped_lines, basic_lines, dot_lines
+from params import make_bbox, augment, randv_big_lines, randv_destroyed_pixels, randv_mixed_lines, randv_packages, randv_middle_lines, randv_single_middle_lines, randv_freq_lines
 from big_defects import add_blur, planet_shift, double_contours, disk_defect
 
 
@@ -27,8 +27,7 @@ def process_lines_art(image, defect_func, type_lines_func, blur, num, num_cycles
         bbox_arr+= make_bbox(location[0], location[1], mask_width, line_amplitude, vertical, variance, frequency, gamma)
         image = type_lines_func(image, location, vertical, dark, brightness, line_amplitude, mask_width, frequency, gamma, variance, noise)
     if blur: 
-        height, width = image.shape
-        Xmin, Ymin, Xmax, Ymax =  conditions[0]*width/100, conditions[1]*height/100, conditions[2]*width/100, conditions[3]*height/100
+        Xmin, Ymin, Xmax, Ymax =  conditions
         image, bbox_arr = add_blur(image, Xmin, Ymin, Xmax, Ymax)
     if display: display_img(image, bbox_arr)
     save_data(num, image, bbox_arr, 0)
@@ -64,7 +63,7 @@ def process_big_art(image, defect_func, num, augmentation, display):
 
 IMG_PATH = 'dataset/images/train'
 LABELS_PATH = 'dataset/labels/train'
-SOURCE = "images"
+SOURCE = "../../Data/lines"
 
 def main():
     name_shift = 0
@@ -85,19 +84,50 @@ def main():
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if gray.shape[0] > 3000:
             gray = cv2.resize(gray, (1080, 1080)) 
-
-        name_shift += process_big_art(gray, double_contours, num, 0, True)
         
         '''
-        if num<=num_images:
-            num_cycles_defects = np.random.randint(1, 3)
-            name_shift += process_img(gray, randv_big_lines, num, num_cycles_defects, 0, False)
-        elif num>num_images and num<=num_images*2:
+        #lines defects
+        if num-name_shift<=100:
             num_cycles_defects = np.random.randint(1, 5)
-            name_shift += process_img(gray, randv_packages, num, num_cycles_defects, 0, False)
+            name_shift += process_lines_art(image=gray, defect_func=randv_middle_lines, type_lines_func=striped_lines,
+                                                blur=False, num=num, num_cycles_defects=num_cycles_defects, augmentation=0, display=False)
+        elif num-name_shift>100 and num-name_shift<=200:
+            num_cycles_defects = np.random.randint(1, 2)
+            name_shift += process_lines_art(image=gray, defect_func=randv_middle_lines, type_lines_func=dark_noise_lines,
+                                        blur=False, num=num, num_cycles_defects=num_cycles_defects, augmentation=0, display=False)
+        elif num-name_shift>200 and num-name_shift<=300:
+            num_cycles_defects = np.random.randint(1, 5)
+            name_shift += process_lines_art(image=gray, defect_func=randv_single_middle_lines, type_lines_func=blur_lines,
+                                        blur=False, num=num, num_cycles_defects=num_cycles_defects, augmentation=0, display=False)
+        
+        if num-name_shift<=60:
+            num_cycles_defects = np.random.randint(1, 2)
+            name_shift += process_lines_art(image=gray, defect_func=randv_freq_lines, type_lines_func=multiple_stripes,
+                                        blur=False, num=num, num_cycles_defects=num_cycles_defects, augmentation=0, display=False)
+        '''
+        num_cycles_defects = np.random.randint(1, 2)
+        name_shift += process_lines_art(image=gray, defect_func=randv_middle_lines, type_lines_func=dot_lines,
+                                    blur=False, num=num, num_cycles_defects=num_cycles_defects, augmentation=0, display=False)
+
+        '''
+        #big defects
+        if num-name_shift<=10:
+            name_shift += process_big_art(gray, disk_defect, num, 1, False)
+        elif num-name_shift>10 and num-name_shift<=20:
+            name_shift += process_big_art(gray, planet_shift, num, 1, False)
+        elif num-name_shift>20 and num-name_shift<=70:
+            Xmin = np.random.randint(5, 70)
+            Ymin = np.random.randint(5, 50)
+            Xmax = np.random.randint(Xmin+10, 100)
+            Ymax = np.random.randint(Ymin+30, 100)
+            name_shift += process_lines_art(image=gray, defect_func=randv_mixed_lines, type_lines_func=basic_lines,
+                                blur=True, num=num, num_cycles_defects=15, augmentation=0, display=False, conditions=[Xmin, Ymin, Xmax, Ymax])
         else:
-            num_cycles_defects = np.random.randint(1, 5)
-            name_shift += process_img(gray, randv_destroyed_pixels, num, num_cycles_defects, 0, False)
+            Xmin, Ymin = np.random.randint(20, 60, 2)
+            Xmax = np.random.randint(Xmin+20, 100)
+            Ymax = np.random.randint(Ymin+20, 100)
+            name_shift += process_lines_art(image=gray, defect_func=randv_big_lines, type_lines_func=blur_lines,
+                                blur=True, num=num, num_cycles_defects=0, augmentation=0, display=False, conditions=[Xmin, Ymin, Xmax, Ymax])
         '''
 
 if __name__ == "__main__":

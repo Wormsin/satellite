@@ -77,6 +77,8 @@ def basic_lines(img: np.uint, location:tuple, vertical: bool, dark:bool, brightn
     mask, line_y, line_x = make_mask(line_amplitude, mask_width, frequency, gamma, variance, noise, vertical)
     mask[mask<0.001] = 0
     space = np.copy(img)
+    if not vertical:
+        x, y = y, x
     if dark:
         img = add_dark_lines(x, y, line_x, line_y, mask, img, brightness)
     else:
@@ -144,7 +146,7 @@ def multiple_stripes(img: np.uint, location:tuple, vertical: bool, dark:bool, br
     x, y = location
     n = 10
     for i in np.arange(-n, n, 2):
-        if i!=0:
+        if np.abs(i)>=6:
             if vertical:
                 x=location[0]+mask_width//i
             else:

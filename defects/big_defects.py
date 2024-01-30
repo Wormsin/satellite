@@ -1,19 +1,20 @@
 import cv2
 import numpy as np
+import imutils
 
 def add_blur(img, Xmin, Ymin, Xmax, Ymax):
     height, width = img.shape
-    w = (Xmax-Xmin)*width/100
-    h = (Ymax-Ymin)*height/100
-    x, y = Xmin*width/100, Ymin*height/100
-    x_w, y_h = Xmax*width/100, Ymax*height/100
+    w = (Xmax-Xmin)*width//100
+    h = (Ymax-Ymin)*height//100
+    x, y = Xmin*width//100, Ymin*height//100
+    x_w, y_h = Xmax*width//100, Ymax*height//100
     ksize = int(np.ceil(min(w, h)/70))
     ksize += (ksize+1)%2
     sub_img = img[y:y+y_h, x:x+x_w]
     img[y:y+y_h, x:x+x_w]= cv2.GaussianBlur(sub_img, (ksize, ksize), int(ksize/2))
-    yc = y+y_h/2
-    xc = x+x_w/2
-    bbox = [[xc/width, yc/height, x_w/width, y_h/height]]
+    yc = y+h/2
+    xc = x+w/2
+    bbox = [[xc/width, yc/height, w/width, h/height]]
     return img, bbox
 
 def planet_shift(image):
@@ -41,9 +42,9 @@ def planet_shift(image):
     else:
         sign = -1
     xc = width/2
-    yc = height/2 + sign*radius + sign*shift*height/(2*2*(shift+2))
+    yc = height/2 - sign*radius/2
     mw = 2*radius
-    mh = shift*height/(2*2*(shift+2))
+    mh = radius+shift*height/((shift+2))
     px, py = 2, 2+shift*sign
     if not vertical:
         xc, yc = yc, xc
@@ -59,12 +60,23 @@ def planet_shift(image):
     return image, bbox
 
 def double_contours(image):
+    height, width = image.shape
     edged = cv2.Canny(image, 100, 450) 
     dilation = cv2.dilate(edged,(1, 1),iterations = 10)
     sub_img= image*dilation
     sub_img = cv2.blur(sub_img, (10, 10))
     image[dilation==255]=sub_img[dilation==255]//4
-    bbox = [[0.5, 0.5, 1, 1]]
+    cnts = cv2.findContours(dilation, cv2.RETR_EXTERNAL,
+	cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    bbox = []
+    for c in cnts:
+        c = np.reshape(c, (len(c), 2))
+        w = np.max(np.reshape(c[:, 0], -1))-np.min(np.reshape(c[:, 0], -1))
+        h = np.max(c[:, 1])-np.min(c[:, 1])
+        xc = np.min(c[:, 0]) + w/2
+        yc = np.min(c[:, 1]) + h/2
+        bbox.append([xc/width, yc/height, w/width, h/height])
     return image, bbox
 
 def rm_half(img):
@@ -93,9 +105,9 @@ def disk_defect(image):
         return rm_half(image)
 
 def test():
-    img = cv2.imread("images/image8.jpg")
+    img = cv2.imread("images/image2.jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    image = disk_defect(gray)
+    image, _ = double_contours(gray)
 
     image = cv2.resize(image, (960, 960)) 
     cv2.imshow("image", image)
