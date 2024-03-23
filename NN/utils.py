@@ -2,7 +2,7 @@ import torch
 from PIL import Image
 import numpy as np
 import os 
-import matplotlib as plt 
+import matplotlib.pyplot as plt 
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import seaborn as sn
 import pandas as pd
@@ -10,15 +10,13 @@ from torchvision import datasets
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-def data_setup(train_dir, test_dir, train_transform, test_transform, batch_size):
+def data_setup(dir, transform, batch_size):
     # Load datasets
-    train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transform)
-    test_dataset = datasets.ImageFolder(root=test_dir, transform=test_transform)
+    dataset = datasets.ImageFolder(root=dir, transform=transform)
     # Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
-    classes = train_dataset.classes
-    return train_loader, test_loader, classes
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    classes = dataset.classes
+    return loader, classes
 
 def checkpoint_fn(model, optimizer, filename):
     torch.save({'optimizer': optimizer.state_dict(),
@@ -57,6 +55,7 @@ def get_metrics(y_true, y_pred, classes):
     return performance
 
 def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint):
+    Image.MAX_IMAGE_PIXELS = 124010496
     if not os.path.isdir('logs'):
         os.mkdir('logs')
     writer = SummaryWriter(log_dir="/home/msvermis/Downloads/ML_projects/satellite-project/satellite/NN/logs")
@@ -71,7 +70,7 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             pred = model(inputs)
-            loss = loss_fn(pred.squeeze(), labels.float())
+            loss = loss_fn(pred, labels)
             train_loss += loss.item()
             loss.backward()
             optimizer.step()
@@ -96,6 +95,7 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
     torch.save(model.state_dict(), 'weights/classification_model.pth')
 
 def evaluate(loader, model, classes):
+    Image.MAX_IMAGE_PIXELS = 124010496
     y_pred = [] # save predction
     y_true = [] # save ground truth
     # iterate over data
@@ -113,9 +113,11 @@ def evaluate(loader, model, classes):
     # Create Heatmap
     plt.figure(figsize=(12, 7))
     performance = get_metrics(y_true=labels, y_pred=y_pred, classes=classes)
-    return sn.heatmap(df_cm, annot=True).get_figure(), performance
+    df_overall = pd.DataFrame(performance['overall'], index = [0])
+    df_classes =pd.DataFrame(performance['class'])
+    return sn.heatmap(df_cm, annot=True).get_figure(), df_overall, df_classes
 
-def test(image_path, transform, model):
+def test(image_path, transform, model, classes):
     image = Image.open(image_path).convert('RGB')
     input_image = transform(image)
     input_image = input_image.unsqueeze(0)  # Add a batch dimension
@@ -123,7 +125,7 @@ def test(image_path, transform, model):
     with torch.no_grad():
         output = model(input_image)
     # Interpret the output
-    prediction = 'with defects' if output.item() < 0.5 else 'without defects'
-    print(f'The image {image_path} is predicted to be: {prediction}')
+    prediction = output.argmax(dim=1).int()
+    print(f'The image {image_path} is predicted to be: {classes[prediction]}')
 
 
