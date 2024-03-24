@@ -86,13 +86,13 @@ def swin_vit(train_dir, test_dir, batch_size, lr):
     swin_model = models.swin_v2_s(weights='DEFAULT')
     for param in swin_model.parameters():
         param.requires_grad = False
-    swin_model.fc = nn.Sequential( 
-        nn.Linear(in_features=swin_model.fc.in_features, 
+    swin_model.head = nn.Sequential( 
+        nn.Linear(in_features=swin_model.head.in_features, 
                         out_features=len(classes), 
                         bias=True),)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(swin_model.classifier.parameters(), lr)
+    optimizer = optim.Adam(swin_model.head.parameters(), lr)
     swin_model = swin_model.to(device)
 
     return swin_model, optimizer, loss_fn, device, train_loader, test_loader, classes

@@ -35,8 +35,8 @@ def swin_vit(model_path, test_dir, batch_size, checkpoint):
     ])
     test_loader, classes = utils.data_setup(test_dir, transform, batch_size)
     model = models.swin_v2_s(weights='DEFAULT')
-    model.fc = nn.Sequential(
-        nn.Linear(model.fc.in_features, len(classes)),
+    model.head = nn.Sequential(
+        nn.Linear(model.head.in_features, len(classes)),
     )
     if checkpoint:
         checkpoint_w = torch.load(model_path)
@@ -44,6 +44,6 @@ def swin_vit(model_path, test_dir, batch_size, checkpoint):
     else:
         model.load_state_dict(torch.load(model_path))
     model.eval()
-    return model, test_loader, classes
+    return model, test_loader, transform, classes
 
 

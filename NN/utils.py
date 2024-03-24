@@ -112,7 +112,7 @@ def evaluate(loader, model, classes):
                          columns=[i for i in classes])
     # Create Heatmap
     plt.figure(figsize=(12, 7))
-    performance = get_metrics(y_true=labels, y_pred=y_pred, classes=classes)
+    performance = get_metrics(y_true=y_true, y_pred=y_pred, classes=classes)
     df_overall = pd.DataFrame(performance['overall'], index = [0])
     df_classes =pd.DataFrame(performance['class'])
     return sn.heatmap(df_cm, annot=True).get_figure(), df_overall, df_classes
