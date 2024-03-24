@@ -46,4 +46,25 @@ def swin_vit(model_path, test_dir, batch_size, checkpoint):
     model.eval()
     return model, test_loader, transform, classes
 
+def vit(model_path, test_dir, batch_size, checkpoint):
+    transform = transforms.Compose([
+        transforms.Resize(224, interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+    test_loader, classes = utils.data_setup(test_dir, transform, batch_size)
+    model = models.vit_b_16(weights='ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1')
+    model.heads = nn.Sequential( 
+        nn.Linear(in_features=model.hidden_dim, 
+                        out_features=len(classes), 
+                        bias=True))
+    if checkpoint:
+        checkpoint_w = torch.load(model_path)
+        model.load_state_dict(checkpoint_w['model'])
+    else:
+        model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model, test_loader, transform, classes
+
 

@@ -116,13 +116,13 @@ def vit(train_dir, test_dir, batch_size, lr):
     vit_model = models.vit_b_16(weights='ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1')
     for param in vit_model.parameters():
         param.requires_grad = False
-    vit_model.classifier = nn.Sequential( 
-        nn.Linear(in_features=vit_model.classifier[1].in_features, 
+    vit_model.heads = nn.Sequential( 
+        nn.Linear(in_features=vit_model.hidden_dim, 
                         out_features=len(classes), 
                         bias=True),)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(vit_model.classifier.parameters(), lr)
+    optimizer = optim.Adam(vit_model.heads.parameters(), lr)
     vit_model = vit_model.to(device)
 
     return vit_model, optimizer, loss_fn, device, train_loader, test_loader, classes
