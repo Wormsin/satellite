@@ -1,6 +1,9 @@
-![Screenshot from 2024-03-25 16-07-38](https://github.com/Wormsin/satellite/assets/142012648/09d811e8-bc4a-4ead-b724-5befb0e0a185)
-![Screenshot from 2024-03-25 16-07-50](https://github.com/Wormsin/satellite/assets/142012648/edc7d002-2ade-45fa-baf4-940ea054f73e)
-![Screenshot from 2024-03-25 16-08-04](https://github.com/Wormsin/satellite/assets/142012648/64dc4f92-c85b-4951-85fb-8e6107796a25)
+<p align="center">
+  <img src ="https://github.com/Wormsin/satellite/assets/142012648/09d811e8-bc4a-4ead-b724-5befb0e0a185"  width="188" height="187">
+  <img src = "https://github.com/Wormsin/satellite/assets/142012648/edc7d002-2ade-45fa-baf4-940ea054f73e" width="188" height="187">
+  <img src ="https://github.com/Wormsin/satellite/assets/142012648/64dc4f92-c85b-4951-85fb-8e6107796a25"  width="188" height="187">
+</p>
+
 # Processing satellite images
 ## Extracting an image from a L15 file
 ```ruby
