@@ -21,14 +21,26 @@ Images are generated with bounding boxes for yolov5 object detection.
 We first do binary classification to separate defective and non-defective images using **resnet101**, and then 4-class classification with the option of adding a new class. \
 Here are the metrics of three pretrained models for 4-class classification:
 ### resnet101
-![Screenshot from 2024-03-24 00-24-17](https://github.com/Wormsin/satellite/assets/142012648/708d55ca-f8eb-4660-b9f3-39e9bfbb5ef5)
-![Screenshot from 2024-03-24 00-24-38](https://github.com/Wormsin/satellite/assets/142012648/0c0e143d-1e32-49e1-99d8-56182ef2f58d)
+
+<p align="center">
+  <img src="https://github.com/Wormsin/satellite/assets/142012648/708d55ca-f8eb-4660-b9f3-39e9bfbb5ef5" width="469" height="309">
+  <img src= "https://github.com/Wormsin/satellite/assets/142012648/0c0e143d-1e32-49e1-99d8-56182ef2f58d" width="248" height="91">
+</p>
+
 ### swin-vit
-![Screenshot from 2024-03-24 12-12-23](https://github.com/Wormsin/satellite/assets/142012648/1693d39e-f92d-4f66-8d00-b7eea401e28d)
-![Screenshot from 2024-03-24 12-12-56](https://github.com/Wormsin/satellite/assets/142012648/605ce8db-f37f-4751-b7e5-5f0888bd8dd3)
+
+<p align="center">
+  <img src = "https://github.com/Wormsin/satellite/assets/142012648/1693d39e-f92d-4f66-8d00-b7eea401e28d" width="462" height="304">
+  <img src= "https://github.com/Wormsin/satellite/assets/142012648/605ce8db-f37f-4751-b7e5-5f0888bd8dd3" width="239" height="93">
+</p>
+
 ### vit
-![Screenshot from 2024-03-24 16-39-21](https://github.com/Wormsin/satellite/assets/142012648/36a99cb4-7a43-45b7-99e8-4867bd693127)
-![Screenshot from 2024-03-24 16-39-56](https://github.com/Wormsin/satellite/assets/142012648/6974752c-f4d4-4353-8efa-949ab3cf3866)
+
+<p align="center">
+  <img src="https://github.com/Wormsin/satellite/assets/142012648/36a99cb4-7a43-45b7-99e8-4867bd693127" width="464" height="304">
+  <img src= "https://github.com/Wormsin/satellite/assets/142012648/6974752c-f4d4-4353-8efa-949ab3cf3866" width="255" height="89">
+</p>
+
 ##### _classes_: ВПМ -- _little lines_, ВПП -- _big lines_, ОИ -- _lack of information_, ЧПИ -- _partial lack of information_
 
 
