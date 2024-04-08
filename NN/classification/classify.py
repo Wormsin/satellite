@@ -20,8 +20,8 @@ model1, transform1 = m.model4classify(name=name1, classes=classes1, weights=mode
 model2, transform2 = m.model4classify(name=name2, classes=classes2, weights=model2, device=device)
 
 
-utils.classification(dir = dir, transform = transform1, model= model1, classes= classes1)
-utils.classification(dir = classes1[0], transform = transform2, model= model2, classes= classes2)
+utils.classification(dir = dir, transform = transform1, model= model1, classes= classes1, device=device)
+utils.classification(dir = classes1[0], transform = transform2, model= model2, classes= classes2, device=device)
 
 os.rmdir(classes1[0])
 os.rmdir(classes1[1])

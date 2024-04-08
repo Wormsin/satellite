@@ -118,18 +118,19 @@ def eval_metrics(loader, model, classes):
     df_classes =pd.DataFrame(performance['class'])
     return sn.heatmap(df_cm, annot=True).get_figure(), df_overall, df_classes
 
-def test(image_path, transform, model, classes):
+def test(image_path, transform, model, classes, device):
     image = Image.open(image_path).convert('RGB')
     input_image = transform(image)
     input_image = input_image.unsqueeze(0)  # Add a batch dimension
     # Make predictions
+    input_image = input_image.to(device)
     with torch.no_grad():
         output = model(input_image)
     # Interpret the output
     prediction = output.argmax(dim=1).int()
     return classes[prediction]
 
-def classification(dir, transform, model, classes):
+def classification(dir, transform, model, classes, device):
     images = os.listdir(dir)
     for cl in classes:
         if not os.path.isdir(cl):
@@ -137,7 +138,7 @@ def classification(dir, transform, model, classes):
     for image in images:
         img_path = dir+'/'+image
         prediction = test(image_path=img_path, transform=transform, 
-             model = model, classes=classes)
+             model = model, classes=classes, device=device)
         os.rename(img_path, os.path.join(prediction, image))
     print(f'Successful classification into {classes} classes')
 
