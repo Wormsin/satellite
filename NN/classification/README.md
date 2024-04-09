@@ -7,5 +7,6 @@ python classify.py --dataset DATASET_PATH --weights MODELS_WEIGHTS_PATH --classe
 
 ## Train the model
 ```ruby
-python train.py --dataset DATASET_PATH --name 'resnet101' --device cuda or cpu --batch BATCH_SIZE --lr LEARNING_RATE --epochs EPOCHS
+python train.py --dataset DATASET_PATH --name 'resnet101' --device cuda or cpu 
+                --batch BATCH_SIZE --lr LEARNING_RATE --epochs EPOCHS
 ```
