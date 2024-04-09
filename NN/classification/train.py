@@ -6,7 +6,7 @@ args = params.parameters()
 
 train_dir = args.dataset + '/train'
 test_dir =  args.dataset +'/test'
-name = args.name
+name = args.name[0]
 batch_size = args.batch
 lr = args.lr
 epochs = args.epochs

@@ -76,7 +76,6 @@ def load_weights(model, model_path, checkpoint = False, device_check = False):
         model.load_state_dict(torch.load(model_path))
     device = torch.device('cuda' if torch.cuda.is_available() and device_check else 'cpu')
     model = model.to(device)
-    model.eval()
     return model
 
 def model4train(name,train_dir,test_dir, batch_size, lr):
@@ -87,7 +86,6 @@ def model4train(name,train_dir,test_dir, batch_size, lr):
     loss_fn = nn.CrossEntropyLoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
-
     return model, optimizer, loss_fn, device, train_loader, test_loader, classes
 
 def model4classify(name, classes, weights, device):
@@ -101,4 +99,5 @@ def model4eval(name, weights, device, test_dir, batch_size, checkpoint):
     test_loader, classes = utils.data_setup(test_dir, transform, batch_size)
     model, _ = get_model_optim(name, classes)
     model = load_weights(model, weights, checkpoint=checkpoint, device_check=device == 'cuda')
+    model.eval()
     return model, test_loader, classes
