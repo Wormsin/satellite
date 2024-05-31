@@ -24,6 +24,11 @@ python -m classification.train --name resnet101 --epochs 500
 ```
 ***Cuda is always used if available***.
 
+## names of defects
+ВПП -- вертикальные полосы по скану<br>
+ОИ -- отсутствие изображения<br>
+ЧПИ -- частичное потеря информации 
+
 
 
 
