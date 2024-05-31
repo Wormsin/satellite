@@ -14,7 +14,7 @@ python -m classification.classify --name resnet101
 ```
 ## multiclass classification
 ```ruby
-python -m classification.classify --name swin_vit --classes ВПВ ВПП ОИ ЧПИ
+python -m classification.classify --name swin_vit --classes ВПМ ВПП ОИ ЧПИ
 ```
 
 ## Train the model
@@ -25,6 +25,7 @@ python -m classification.train --name resnet101 --epochs 500
 ***Cuda is always used if available***.
 
 ## names of defects
+ВПМ -- вертикальные полосы множественные<br>
 ВПП -- вертикальные полосы по скану<br>
 ОИ -- отсутствие изображения<br>
 ЧПИ -- частичное потеря информации 
