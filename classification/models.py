@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
-import utils 
+import classification.utils as utils
 import torch.optim as optim
 
 def get_transform(model_name):
@@ -73,8 +73,8 @@ def load_weights(model, model_path, checkpoint = False, device_check = False):
         checkpoint_w = torch.load(model_path)
         model.load_state_dict(checkpoint_w['model'])
     else:
-        model.load_state_dict(torch.load(model_path))
-    device = torch.device('cuda' if torch.cuda.is_available() and device_check else 'cpu')
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model.load_state_dict(torch.load(model_path, map_location=device))
     model = model.to(device)
     return model
 
@@ -88,11 +88,12 @@ def model4train(name,train_dir,test_dir, batch_size, lr):
     model = model.to(device)
     return model, optimizer, loss_fn, device, train_loader, test_loader, classes
 
-def model4classify(name, classes, weights, device):
+def model4classify(name, classes, weights):
     _, transform = get_transform(model_name=name)
     model, _ = get_model_optim(name, classes)
-    model = load_weights(model, weights, device_check=device == 'cuda')
-    return model , transform
+    model = load_weights(model, weights)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    return model , transform, device
 
 def model4eval(name, weights, device, test_dir, batch_size, checkpoint):
     _, transform = get_transform(model_name=name)

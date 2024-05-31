@@ -8,7 +8,7 @@ import seaborn as sn
 import pandas as pd
 from torchvision import datasets
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms, models
 
 def data_setup(dir, transform, batch_size):
@@ -55,16 +55,16 @@ def get_metrics(y_true, y_pred, classes):
         }
     return performance
 
-def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint):
+def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint, name):
     Image.MAX_IMAGE_PIXELS = 124010496
-    if not os.path.isdir('logs'):
-        os.mkdir('logs')
-    writer = SummaryWriter(log_dir="/home/msvermis/Downloads/ML_projects/satellite-project/satellite/NN/logs")
+    #if not os.path.isdir('logs'):
+    #    os.mkdir('logs')
+    #writer = SummaryWriter(log_dir="/home/msvermis/Downloads/ML_projects/satellite-project/satellite/NN/logs")
     if not os.path.isdir('weights') and checkpoint:
         os.mkdir('weights')
     for epoch in np.arange(0, num_epochs):
         if epoch%50 ==0 and epoch!=0 and checkpoint:
-            checkpoint_fn(model, optimizer, f'weights/classification_model_{epoch}.pth')
+            checkpoint_fn(model, optimizer, f'weights/{name}_{epoch}.pth')
         model.train()
         train_loss = 0
         for inputs, labels in train_loader:
@@ -89,11 +89,11 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
             accuracy = correct / len(test_loader)
         if epoch%1==0:
             print(f"Epoch: {epoch} | train loss: {train_loss:.2f}, test accuracy: {accuracy:.1f}")
-        writer.add_scalars(main_tag="Loss", tag_scalar_dict={"train_loss": train_loss}, global_step=epoch)
-        writer.add_scalars(main_tag="Accuracy", tag_scalar_dict={"test_acc": accuracy}, global_step=epoch)
+        #writer.add_scalars(main_tag="Loss", tag_scalar_dict={"train_loss": train_loss}, global_step=epoch)
+        #writer.add_scalars(main_tag="Accuracy", tag_scalar_dict={"test_acc": accuracy}, global_step=epoch)
         # Close the writer
-        writer.close()
-    torch.save(model.state_dict(), 'weights/classification_model.pth')
+        #writer.close()
+    torch.save(model.state_dict(), f'weights/{name}.pth')
 
 def eval_metrics(loader, model, classes):
     Image.MAX_IMAGE_PIXELS = 124010496

@@ -3,7 +3,7 @@ import argparse
 def parameters():
     parser = argparse.ArgumentParser(description='train the model')
     parser.add_argument('--dataset', metavar='dataset', type=str,
-                        help='a directory with a dataset', required=True)
+                        help='a directory with a dataset', required=False, default='images')
     parser.add_argument('--name', metavar='name', type=str,
                         help='model name', required=True, nargs='+')
     parser.add_argument('--batch', metavar='batch', type=int,
@@ -15,8 +15,8 @@ def parameters():
     parser.add_argument('--weights', metavar='weights', type=str,
                         help='file with a trained weights', nargs='+', required=False)
     parser.add_argument('--classes', metavar='classes', type=str,
-                        help='classes for a multiclass classification', required=False, nargs='+')
+                        help='classes for a multiclass classification', required=False, nargs='+', default=[])
     parser.add_argument('--device', metavar='device', type=str,
-                        help='cpu or cuda', choices=['cuda', 'cpu'], default='cpu', required=False)
+                        help='cpu or cuda', choices=['cuda', 'cpu'], default='cuda', required=False)
     args = parser.parse_args()
     return args
