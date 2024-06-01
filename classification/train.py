@@ -6,8 +6,8 @@ if __name__ == "__main__":
     args = params.parameters()
 
     name = args.name[0]
-    train_dir = f'{name}_dataset' + '/train'
-    test_dir =  f'{name}_dataset' +'/test'
+    train_dir = f'datasets/{name}' + '/train'
+    test_dir =  f'datasets/{name}' +'/test'
     batch_size = args.batch
     lr = args.lr
     epochs = args.epochs
@@ -17,6 +17,10 @@ if __name__ == "__main__":
 
     print(f"classes: {classes}")
     print(f"device: {device}")
+    with open('classification/classes.txt', 'w') as file:
+        file.write(" ".join(classes))
 
     utils.train(num_epochs=epochs, optimizer=optimizer, model=model, loss_fn=loss_fn, train_loader=train_loader, 
                 test_loader=test_loader, device=device, checkpoint=False, name=name)
+
+    

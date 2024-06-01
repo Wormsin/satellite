@@ -14,8 +14,6 @@ def parameters():
                         help='number of epochs', required=False)
     parser.add_argument('--weights', metavar='weights', type=str,
                         help='file with a trained weights', nargs='+', required=False)
-    parser.add_argument('--classes', metavar='classes', type=str,
-                        help='classes for a multiclass classification', required=False, nargs='+', default=[])
     parser.add_argument('--device', metavar='device', type=str,
                         help='cpu or cuda', choices=['cuda', 'cpu'], default='cuda', required=False)
     args = parser.parse_args()

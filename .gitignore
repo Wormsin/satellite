@@ -1,0 +1,6 @@
+*.L15
+untracted
+*__pycache__*
+*images*
+weights
+*dataset*
