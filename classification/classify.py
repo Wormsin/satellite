@@ -26,14 +26,12 @@ def add2dataset(classes, name):
 if __name__ == "__main__":
     args = params.parameters()
 
-    #device = args.device
-
     with open('classification/classes.txt', 'r') as file:
         content = file.read()
         classes = content.split()
 
-    names = args.name
-    classes, dir = (classes, 'new_defected') if names[0] != 'resnet101' else (['defected', 'normal'], 'images')
+    names = args.type
+    classes, dir = (classes, 'new_defected') if names[0] != 'binary' else (['defected', 'normal'], 'images')
 
     if not len(os.listdir(dir)) == 0:
         model, transform, device = m.model4classify(name=names[0], classes=classes, weights=f'weights/{names[0]}'+'.pth')

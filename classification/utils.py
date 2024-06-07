@@ -8,43 +8,6 @@ import seaborn as sn
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score
 
-
-def checkpoint_fn(model, optimizer, filename):
-    torch.save({'optimizer': optimizer.state_dict(),
-    'model': model.state_dict(),}, filename)
-
-def resume(model, optimizer, filename):
-    checkpoint = torch.load(filename)
-    model.load_state_dict(checkpoint['model'])
-    optimizer.load_state_dict(checkpoint['optimizer'])
-
-def accuracy_fn(y_pred, y_true):
-    n_correct = torch.eq(y_pred, y_true).sum().item()
-    accuracy = (n_correct / len(y_pred))
-    return accuracy
-
-def get_metrics(y_true, y_pred, classes):
-    """Per-class performance metrics."""
-    # Performance
-    performance = {"overall": {}, "class": {}}
-    # Overall performance
-    metrics = precision_recall_fscore_support(y_true, y_pred, average="weighted")
-    performance["overall"]["precision"] = metrics[0]
-    performance["overall"]["recall"] = metrics[1]
-    performance["overall"]["f1"] = metrics[2]
-    performance["overall"]["num_samples"] = np.float64(len(y_true))
-
-    # Per-class performance
-    metrics = precision_recall_fscore_support(y_true, y_pred, average=None)
-    for i in range(len(classes)):
-        performance["class"][classes[i]] = {
-            "precision": metrics[0][i],
-            "recall": metrics[1][i],
-            "f1": metrics[2][i],
-            "num_samples": np.float64(metrics[3][i]),
-        }
-    return performance
-
 def binary_metrics_test(y_true, y_pred, loss):
     acc = accuracy_score(y_true, y_pred)
     if acc>0.95 and loss<0.25:
@@ -63,18 +26,16 @@ def multi_metrics_test(y_true, y_pred, classes):
 
 def metrics_test(model_name, y_true, y_pred, classes, loss):
     match model_name:
-        case 'resnet101':
+        case 'binary':
             return binary_metrics_test(y_true, y_pred, loss)
-        case 'swin_vit':
+        case 'multi':
             return multi_metrics_test(y_true, y_pred, classes)
 
-def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint, name, classes):
+def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, name, classes):
     Image.MAX_IMAGE_PIXELS = 124010496
     if not os.path.isdir('weights'):
         os.mkdir('weights')
     for epoch in np.arange(0, num_epochs):
-        if epoch%50 ==0 and epoch!=0 and checkpoint:
-            checkpoint_fn(model, optimizer, f'weights/{name}_{epoch}.pth')
         model.train()
         train_loss = 0
         for inputs, labels in train_loader:
@@ -112,29 +73,6 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
     else:
         print(f"More images need to be added to classes {result}, so the weights without the new classes remain")
         return 0
-
-def eval_metrics(loader, model, classes):
-    Image.MAX_IMAGE_PIXELS = 124010496
-    y_pred = [] # save predction
-    y_true = [] # save ground truth
-    # iterate over data
-    for inputs, labels in loader:
-        #inputs, labels = inputs.to(device), labels.to(device)
-        output = model(inputs)  
-        output = output.argmax(dim=1).float()
-        y_pred.extend(output)  
-        labels = labels.data.cpu().numpy()
-        y_true.extend(labels) 
-    # Build confusion matrix
-    cf_matrix = confusion_matrix(y_true, y_pred)
-    df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index=[i for i in classes],
-                         columns=[i for i in classes])
-    # Create Heatmap
-    plt.figure(figsize=(12, 7))
-    performance = get_metrics(y_true=y_true, y_pred=y_pred, classes=classes)
-    df_overall = pd.DataFrame(performance['overall'], index = [0])
-    df_classes =pd.DataFrame(performance['class'])
-    return sn.heatmap(df_cm, annot=True).get_figure(), df_overall, df_classes
 
 def test(image_path, transform, model, classes, device):
     image = Image.open(image_path).convert('RGB')

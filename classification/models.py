@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
-import classification.utils as utils
 import torch.optim as optim
 from torchvision import datasets
 from torch.utils.data import DataLoader
@@ -17,7 +16,7 @@ def data_setup(dir, transform, batch_size):
 
 def get_transform(model_name):
     match model_name:
-        case 'resnet101':
+        case 'binary':
             train_transform = transforms.Compose([
     transforms.RandomResizedCrop(224, interpolation=transforms.InterpolationMode.BILINEAR),
     transforms.RandomHorizontalFlip(),
@@ -31,7 +30,7 @@ def get_transform(model_name):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-        case 'swin_vit':
+        case 'multi':
             train_transform = transforms.Compose([
     transforms.RandomResizedCrop(256, interpolation=transforms.InterpolationMode.BILINEAR),
     transforms.RandomHorizontalFlip(),
@@ -45,47 +44,24 @@ def get_transform(model_name):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-        case 'vit':
-            train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(224, interpolation=transforms.InterpolationMode.BILINEAR),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation((0, 180)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-            test_transform = transforms.Compose([
-        transforms.Resize(224, interpolation=transforms.InterpolationMode.BILINEAR),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
     return train_transform, test_transform
 
-def get_model_optim(model_name, classes, lr = 0.001, checkpoint = False, device_check = True):
+def get_model_optim(model_name, classes, lr = 0.001):
     ncls = len(classes)
     match model_name:
-        case 'resnet101':
+        case 'binary':
             model = models.resnet101(weights = 'DEFAULT')
             model.fc = nn.Sequential( nn.Linear(model.fc.in_features, ncls),)
             optimizer = optim.Adam(model.fc.parameters(), lr)
-        case 'swin_vit':
+        case 'multi':
             model = models.swin_v2_s(weights='DEFAULT')
             model.head = nn.Sequential( nn.Linear(model.head.in_features, ncls),)
             optimizer = optim.Adam(model.head.parameters(), lr)
-        case 'vit':
-            model = models.vit_b_16(weights='ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1')
-            model.heads = nn.Sequential( nn.Linear(in_features=model.hidden_dim, 
-                                                   out_features=ncls, bias=True))
-            optimizer = optim.Adam(model.heads.parameters(), lr)
     return model, optimizer
 
-def load_weights(model, model_path, checkpoint = False, device_check = False):
-    if checkpoint:
-        checkpoint_w = torch.load(model_path)
-        model.load_state_dict(checkpoint_w['model'])
-    else:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        model.load_state_dict(torch.load(model_path, map_location=device))
+def load_weights(model, model_path):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model = model.to(device)
     return model
 
@@ -105,11 +81,3 @@ def model4classify(name, classes, weights):
     model = load_weights(model, weights)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     return model , transform, device
-
-def model4eval(name, weights, device, test_dir, batch_size, checkpoint):
-    _, transform = get_transform(model_name=name)
-    test_loader, classes = data_setup(test_dir, transform, batch_size)
-    model, _ = get_model_optim(name, classes)
-    model = load_weights(model, weights, checkpoint=checkpoint, device_check=device == 'cuda')
-    model.eval()
-    return model, test_loader, classes

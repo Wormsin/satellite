@@ -5,8 +5,8 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-mkdir "datasets/swin_vit/test/$1"
-mkdir "datasets/swin_vit/train/$1"
+mkdir "datasets/multi/test/$1"
+mkdir "datasets/multi/train/$1"
 
 if [ $? -eq 0 ]; then
   echo "Directory '$1' created successfully."

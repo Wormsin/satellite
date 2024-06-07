@@ -7,7 +7,7 @@ def create(folder):
 
 
 folders = ['datasets']
-branches2 = ['resnet101', 'swin_vit']
+branches2 = ['binary', 'multi']
 branches3 = ['test', 'train']
 branches4 = [['defected', 'normal'], ['ВПМ', 'ВПП', 'ОИ', 'ЧПИ']]
 

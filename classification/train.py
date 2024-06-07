@@ -5,7 +5,7 @@ import classification.params as params
 if __name__ == "__main__":
     args = params.parameters()
     
-    name = args.name[0]
+    name = args.type[0]
     train_dir = f'datasets/{name}' + '/train'
     test_dir =  f'datasets/{name}' +'/test'
     batch_size = args.batch
@@ -20,8 +20,8 @@ if __name__ == "__main__":
     
 
     result = utils.train(num_epochs=epochs, optimizer=optimizer, model=model, loss_fn=loss_fn, train_loader=train_loader, 
-                test_loader=test_loader, device=device, checkpoint=False, name=name, classes=classes)
+                test_loader=test_loader, device=device, name=name, classes=classes)
 
-    if name == 'swin_vit' and result:
+    if name == 'multi' and result:
         with open('classification/classes.txt', 'w') as file:
             file.write(" ".join(classes))
