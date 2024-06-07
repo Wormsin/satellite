@@ -1,7 +1,6 @@
 import os 
 
 def create(folder):
-    folder = '../' + folder
     if not os.path.isdir(folder):
         os.makedirs(folder)
 
