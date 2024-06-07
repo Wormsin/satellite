@@ -5,7 +5,7 @@ import classification.params as params
 if __name__ == "__main__":
     args = params.parameters()
     
-    name = args.type[0]
+    name = args.type
     train_dir = f'datasets/{name}' + '/train'
     test_dir =  f'datasets/{name}' +'/test'
     batch_size = args.batch

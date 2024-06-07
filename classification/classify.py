@@ -30,13 +30,13 @@ if __name__ == "__main__":
         content = file.read()
         classes = content.split()
 
-    names = args.type
-    classes, dir = (classes, 'new_defected') if names[0] != 'binary' else (['defected', 'normal'], 'images')
+    name = args.type
+    classes, dir = (classes, 'new_defected') if name != 'binary' else (['defected', 'normal'], 'images')
 
     if not len(os.listdir(dir)) == 0:
-        model, transform, device = m.model4classify(name=names[0], classes=classes, weights=f'weights/{names[0]}'+'.pth')
+        model, transform, device = m.model4classify(name=name, classes=classes, weights=f'weights/{name}'+'.pth')
         utils.classification(dir = dir, transform = transform, model= model, classes= classes, device=device)
-        add2dataset(classes, names[0]) 
+        add2dataset(classes, name) 
     else:
         print(f'{dir} is empty!')
 

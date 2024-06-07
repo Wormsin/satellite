@@ -8,15 +8,17 @@ import seaborn as sn
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score
 
-def binary_metrics_test(y_true, y_pred, loss):
+def binary_metrics_test(y_true, y_pred, loss, epoch):
     acc = accuracy_score(y_true, y_pred)
+    print(f"Epoch: {epoch} | train loss: {loss:.2f}, accuracy: {acc:.2f}")
     if acc>0.95 and loss<0.25:
         return []
     else: 
         return [0]
 
-def multi_metrics_test(y_true, y_pred, classes):
+def multi_metrics_test(y_true, y_pred, classes, epoch):
     f1 = f1_score(y_true, y_pred, average=None)
+    print(f"Epoch: {epoch} | F1 for {classes}: {f1}")
     if np.sum(f1>0.85) == len(classes):
         return []
     else:
@@ -24,12 +26,12 @@ def multi_metrics_test(y_true, y_pred, classes):
         bad_results = [classes[int(i)] for i in bad_mask[0] ]
         return bad_results
 
-def metrics_test(model_name, y_true, y_pred, classes, loss):
+def metrics_test(model_name, y_true, y_pred, classes, loss, epoch):
     match model_name:
         case 'binary':
-            return binary_metrics_test(y_true, y_pred, loss)
+            return binary_metrics_test(y_true, y_pred, loss, epoch)
         case 'multi':
-            return multi_metrics_test(y_true, y_pred, classes)
+            return multi_metrics_test(y_true, y_pred, classes, epoch)
 
 def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, name, classes):
     Image.MAX_IMAGE_PIXELS = 124010496
@@ -61,8 +63,7 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
                 labels = labels.data.cpu().numpy()
                 y_true.extend(labels)
         if epoch%1==0:
-            print(f"Epoch: {epoch} | train loss: {train_loss:.2f}")
-        result = metrics_test(name, y_true, y_pred, classes, train_loss)
+            result = metrics_test(name, y_true, y_pred, classes, train_loss, epoch)
         if result == []:
             print(f"Metrics is good, save the new weights!")
             torch.save(model.state_dict(), f'weights/{name}.pth')
