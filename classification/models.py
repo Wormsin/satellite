@@ -3,6 +3,17 @@ import torch.nn as nn
 from torchvision import transforms, models
 import classification.utils as utils
 import torch.optim as optim
+from torchvision import datasets
+from torch.utils.data import DataLoader
+from torchvision import transforms, models
+
+def data_setup(dir, transform, batch_size):
+    # Load datasets
+    dataset = datasets.ImageFolder(root=dir, transform=transform)
+    # Create data loaders
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    classes = dataset.classes
+    return loader, classes
 
 def get_transform(model_name):
     match model_name:
@@ -51,7 +62,7 @@ def get_transform(model_name):
     return train_transform, test_transform
 
 def get_model_optim(model_name, classes, lr = 0.001, checkpoint = False, device_check = True):
-    ncls = len(classes) if len(classes)>2 else 1
+    ncls = len(classes)
     match model_name:
         case 'resnet101':
             model = models.resnet101(weights = 'DEFAULT')
@@ -80,8 +91,8 @@ def load_weights(model, model_path, checkpoint = False, device_check = False):
 
 def model4train(name,train_dir,test_dir, batch_size, lr):
     train_transform, test_transform = get_transform(model_name=name)
-    train_loader, classes = utils.data_setup(train_dir, train_transform, batch_size)
-    test_loader, _ = utils.data_setup(test_dir, test_transform, batch_size)
+    train_loader, classes = data_setup(train_dir, train_transform, batch_size)
+    test_loader, _ = data_setup(test_dir, test_transform, batch_size)
     model, optimizer = get_model_optim(name, classes, lr)
     loss_fn = nn.CrossEntropyLoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -97,7 +108,7 @@ def model4classify(name, classes, weights):
 
 def model4eval(name, weights, device, test_dir, batch_size, checkpoint):
     _, transform = get_transform(model_name=name)
-    test_loader, classes = utils.data_setup(test_dir, transform, batch_size)
+    test_loader, classes = data_setup(test_dir, transform, batch_size)
     model, _ = get_model_optim(name, classes)
     model = load_weights(model, weights, checkpoint=checkpoint, device_check=device == 'cuda')
     model.eval()

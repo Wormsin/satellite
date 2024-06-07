@@ -6,18 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import seaborn as sn
 import pandas as pd
-from torchvision import datasets
-from torch.utils.data import DataLoader
-#from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms, models
+from sklearn.metrics import f1_score, accuracy_score
 
-def data_setup(dir, transform, batch_size):
-    # Load datasets
-    dataset = datasets.ImageFolder(root=dir, transform=transform)
-    # Create data loaders
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-    classes = dataset.classes
-    return loader, classes
 
 def checkpoint_fn(model, optimizer, filename):
     torch.save({'optimizer': optimizer.state_dict(),
@@ -55,12 +45,32 @@ def get_metrics(y_true, y_pred, classes):
         }
     return performance
 
-def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint, name):
+def binary_metrics_test(y_true, y_pred, loss):
+    acc = accuracy_score(y_true, y_pred)
+    if acc>0.95 and loss<0.25:
+        return []
+    else: 
+        return [0]
+
+def multi_metrics_test(y_true, y_pred, classes):
+    f1 = f1_score(y_true, y_pred, average=None)
+    if np.sum(f1>0.85) == len(classes):
+        return []
+    else:
+        bad_mask = (f1<0.85).nonzero()
+        bad_results = [classes[int(i)] for i in bad_mask[0] ]
+        return bad_results
+
+def metrics_test(model_name, y_true, y_pred, classes, loss):
+    match model_name:
+        case 'resnet101':
+            return binary_metrics_test(y_true, y_pred, loss)
+        case 'swin_vit':
+            return multi_metrics_test(y_true, y_pred, classes)
+
+def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, checkpoint, name, classes):
     Image.MAX_IMAGE_PIXELS = 124010496
-    #if not os.path.isdir('logs'):
-    #    os.mkdir('logs')
-    #writer = SummaryWriter(log_dir="/home/msvermis/Downloads/ML_projects/satellite-project/satellite/NN/logs")
-    if not os.path.isdir('weights') and checkpoint:
+    if not os.path.isdir('weights'):
         os.mkdir('weights')
     for epoch in np.arange(0, num_epochs):
         if epoch%50 ==0 and epoch!=0 and checkpoint:
@@ -80,20 +90,28 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
         # Evaluate the model on the test set
         model.eval()
         with torch.no_grad():
-            correct = 0
+            y_pred = []
+            y_true = []
             for inputs, labels in test_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
-                predicted = outputs.argmax(dim=1)
-                correct += accuracy_fn(predicted, labels)
-            accuracy = correct / len(test_loader)
+                predicted = outputs.argmax(dim=1).data.cpu().numpy()
+                y_pred.extend(predicted)
+                labels = labels.data.cpu().numpy()
+                y_true.extend(labels)
         if epoch%1==0:
-            print(f"Epoch: {epoch} | train loss: {train_loss:.2f}, test accuracy: {accuracy:.1f}")
-        #writer.add_scalars(main_tag="Loss", tag_scalar_dict={"train_loss": train_loss}, global_step=epoch)
-        #writer.add_scalars(main_tag="Accuracy", tag_scalar_dict={"test_acc": accuracy}, global_step=epoch)
-        # Close the writer
-        #writer.close()
-    torch.save(model.state_dict(), f'weights/{name}.pth')
+            print(f"Epoch: {epoch} | train loss: {train_loss:.2f}")
+        result = metrics_test(name, y_true, y_pred, classes, train_loss)
+        if result == []:
+            print(f"Metrics is good, save the new weights!")
+            torch.save(model.state_dict(), f'weights/{name}.pth')
+            return 1
+    if result[0] == 0:
+        print(f"Metrics are bad, so the weights stay the same")
+        return 0
+    else:
+        print(f"More images need to be added to classes {result}, so the weights without the new classes remain")
+        return 0
 
 def eval_metrics(loader, model, classes):
     Image.MAX_IMAGE_PIXELS = 124010496
@@ -141,6 +159,4 @@ def classification(dir, transform, model, classes, device):
              model = model, classes=classes, device=device)
         os.rename(img_path, os.path.join(prediction, image))
     print(f'Successful classification into {classes} classes')
-
-
 
