@@ -6,7 +6,7 @@ New images: **images**<br>
 New defected images: **new_defected**<br>
 Datasets for binary and multiclass classification with classes from classes.txt: **datasets**
 ```ruby
-python -m settings.create_storage
+python -m setting.create_storage
 ```
 ## decode L15 files
 ```ruby
