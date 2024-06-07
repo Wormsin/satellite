@@ -15,13 +15,13 @@ go run decode_L15/seek.go
 ## binary classification 
 After classification the images are added to the corresponding dataset and *new_defected*
 ```ruby
-python -m classification.classify --name resnet101
+python -m classification.classify --type binary/multi
 ```
 ## multiclass classification
 After classification the images are added to the corresponding dataset from *new_defected*<br>
 Classes are taken from the classification/classes.txt
 ```ruby
-python -m classification.classify --name swin_vit 
+python -m classification.classify --type binary/multi 
 ```
 ## Add the new class
 The new class will be used after training before this images in the new class are added manually without classification
@@ -29,8 +29,9 @@ The new class will be used after training before this images in the new class ar
 ./classification/add_new_class.sh NEW_CLASS
 ```
 ## Train the model
+default number of epochs = 500
 ```ruby
-python -m classification.train --name resnet101 --epochs 500
+python -m classification.train --type binary/multi
 ```
 ***Cuda is always used if available***.
 
