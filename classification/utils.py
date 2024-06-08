@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score, accuracy_score
 def binary_metrics_test(y_true, y_pred, loss, epoch):
     acc = accuracy_score(y_true, y_pred)
     print(f"Epoch: {epoch} | train loss: {loss:.2f}, accuracy: {acc:.2f}")
-    if acc>0.95 and loss<0.25:
+    if acc>0.95 and loss<0.15:
         return []
     else: 
         return [0]
@@ -88,6 +88,7 @@ def test(image_path, transform, model, classes, device):
     return classes[prediction]
 
 def classification(dir, transform, model, classes, device):
+    Image.MAX_IMAGE_PIXELS = 124010496
     images = os.listdir(dir)
     for cl in classes:
         if not os.path.isdir(cl):
