@@ -8,32 +8,46 @@ import seaborn as sn
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score
 
-def binary_metrics_test(y_true, y_pred, loss, epoch):
+def binary_metrics_test(y_true, y_pred, loss, epoch, metrics):
     acc = accuracy_score(y_true, y_pred)
     print(f"Epoch: {epoch} | train loss: {loss:.2f}, accuracy: {acc:.2f}")
-    if acc>0.95 and loss<0.15:
-        return []
+    if acc>=metrics[1] and loss<=metrics[0]:
+        return True, np.array([loss, acc])
     else: 
-        return [0]
+        return False, [0]
 
-def multi_metrics_test(y_true, y_pred, classes, epoch):
+def multi_metrics_test(y_true, y_pred, classes, epoch, metrics):
     f1 = f1_score(y_true, y_pred, average=None)
     print(f"Epoch: {epoch} | F1 for {classes}: {f1}")
-    if np.sum(f1>0.85) == len(classes):
-        return []
+    if np.sum(f1>=metrics) == len(classes):
+        return True, f1
     else:
         bad_mask = (f1<0.85).nonzero()
         bad_results = [classes[int(i)] for i in bad_mask[0] ]
-        return bad_results
+        return False, bad_results
 
-def metrics_test(model_name, y_true, y_pred, classes, loss, epoch):
+def metrics_test(model_name, y_true, y_pred, classes, loss, epoch, metrics):
     match model_name:
         case 'binary':
-            return binary_metrics_test(y_true, y_pred, loss, epoch)
+            return binary_metrics_test(y_true, y_pred, loss, epoch, metrics)
         case 'multi':
-            return multi_metrics_test(y_true, y_pred, classes, epoch)
-
-def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, name, classes):
+            return multi_metrics_test(y_true, y_pred, classes, epoch, metrics)
+        
+def save_new_metrics(metrics):
+    line_to_modify = 0 if len(metrics) == 2 else 1
+    metrics = np.round(metrics, 2)
+    metrics = metrics.astype(str)
+    metrics = metrics.tolist()
+    metrics = ' '.join(metrics)
+    if line_to_modify == 0:
+        metrics+='\n'
+    with open('classification/metrics.txt', 'r') as file:
+        lines = file.readlines()
+    lines[line_to_modify] = metrics
+    with open('classification/metrics.txt', 'w') as file:
+        file.writelines(lines)
+    
+def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, device, name, classes, metrics):
     Image.MAX_IMAGE_PIXELS = 124010496
     if not os.path.isdir('weights'):
         os.mkdir('weights')
@@ -63,16 +77,17 @@ def train(num_epochs, optimizer, model, loss_fn, train_loader, test_loader, devi
                 labels = labels.data.cpu().numpy()
                 y_true.extend(labels)
         if epoch%1==0:
-            result = metrics_test(name, y_true, y_pred, classes, train_loss, epoch)
-        if result == []:
+            result, new_metrics = metrics_test(name, y_true, y_pred, classes, train_loss, epoch, metrics)
+        if result:
             print(f"Metrics is good, save the new weights!")
             torch.save(model.state_dict(), f'weights/{name}.pth')
+            save_new_metrics(new_metrics)
             return 1
-    if result[0] == 0:
+    if not result and new_metrics[0] == 0:
         print(f"Metrics are bad, so the weights stay the same")
         return 0
     else:
-        print(f"More images need to be added to classes {result}, so the weights without the new classes remain")
+        print(f"More images need to be added to classes {new_metrics}, so the weights without the new classes remain")
         return 0
 
 def test(image_path, transform, model, classes, device):
@@ -113,3 +128,4 @@ def check_batch_size_memory(model, batch_size, input_shape, device='cuda'):
         return True
     finally:
         torch.cuda.empty_cache()
+

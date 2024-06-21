@@ -1,6 +1,7 @@
 import classification.utils as utils
 import classification.models as models
 import classification.params as params
+import numpy as np
 
 if __name__ == "__main__":
     args = params.parameters()
@@ -13,6 +14,12 @@ if __name__ == "__main__":
     epochs = args.epochs
     mem_error = True
 
+    with open('classification/metrics.txt', 'r') as file:
+        content = file.read()
+        metrics = content.split()
+    metrics = metrics[:2] if name == "binary" else metrics[2:]
+    metrics = np.array(metrics, dtype=float)
+    
     while mem_error:
         model, optimizer, loss_fn, device, train_loader, test_loader, classes = models.model4train(name=name, train_dir=train_dir, test_dir=test_dir, 
                                                                                                 batch_size=batch_size, lr=lr)
@@ -26,9 +33,8 @@ if __name__ == "__main__":
     print(f"classes: {classes}")
     print(f"device: {device}")
     
-
     result = utils.train(num_epochs=epochs, optimizer=optimizer, model=model, loss_fn=loss_fn, train_loader=train_loader, 
-                test_loader=test_loader, device=device, name=name, classes=classes)
+                test_loader=test_loader, device=device, name=name, classes=classes, metrics = metrics)
 
     if name == 'multi' and result:
         with open('classification/classes.txt', 'w') as file:
