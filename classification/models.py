@@ -1,10 +1,14 @@
 import torch
 import torch.nn as nn
-from torchvision import transforms, models
+from torchvision import models
+from torchvision.transforms import v2
 import torch.optim as optim
 from torchvision import datasets
 from torch.utils.data import DataLoader
 from torchvision import transforms, models
+from PIL import Image
+
+Image.MAX_IMAGE_PIXELS = 124010496
 
 def data_setup(dir, transform, batch_size):
     # Load datasets
@@ -17,32 +21,36 @@ def data_setup(dir, transform, batch_size):
 def get_transform(model_name):
     match model_name:
         case 'binary':
-            train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(224, interpolation=transforms.InterpolationMode.BILINEAR),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation((0, 180)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            train_transform = v2.Compose([
+    v2.RandomResizedCrop(224, interpolation=v2.InterpolationMode.BILINEAR),
+    v2.RandomHorizontalFlip(0.5),
+    v2.RandomVerticalFlip(0.5),
+    v2.RandomPerspective(distortion_scale=0.6, p=0.5),
+    v2.RandomAdjustSharpness(sharpness_factor=2),
+    v2.ToImage(), v2.ToDtype(torch.float32, scale=True),
+    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-            test_transform = transforms.Compose([
-        transforms.Resize(232, interpolation=transforms.InterpolationMode.BILINEAR),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            test_transform = v2.Compose([
+        v2.Resize(232, interpolation=v2.InterpolationMode.BILINEAR),
+        v2.CenterCrop(224),
+        v2.ToImage(), v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
         case 'multi':
-            train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(256, interpolation=transforms.InterpolationMode.BILINEAR),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation((0, 180)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            train_transform = v2.Compose([
+    v2.RandomResizedCrop(256, interpolation=v2.InterpolationMode.BILINEAR),
+    v2.RandomHorizontalFlip(0.5),
+    v2.RandomVerticalFlip(0.5),
+    v2.RandomPerspective(distortion_scale=0.6, p=0.5),
+    v2.RandomAdjustSharpness(sharpness_factor=2),
+    v2.ToImage(), v2.ToDtype(torch.float32, scale=True),
+    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-            test_transform = transforms.Compose([
-        transforms.Resize(260, interpolation=transforms.InterpolationMode.BILINEAR),
-        transforms.CenterCrop(256),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            test_transform = v2.Compose([
+        v2.Resize(260, interpolation=v2.InterpolationMode.BILINEAR),
+        v2.CenterCrop(256),
+        v2.ToImage(), v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     return train_transform, test_transform
 

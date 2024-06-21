@@ -106,10 +106,10 @@ def check_batch_size_memory(model, batch_size, input_shape, device='cuda'):
         dummy_input = torch.randn(batch_size, *input_shape, device=device)
         model.to(device)  
         _ = model(dummy_input)
-        print("This batch size fits into GPU memory.")
+        print(f"This batch size {batch_size} fits into GPU memory.")
         return False
     except torch.cuda.OutOfMemoryError:
-        print("CUDA out of memory error: the batch size is too large for the GPU.")
+        print(f"CUDA out of memory error: the batch size {batch_size} is too large for the GPU.")
         return True
     finally:
         torch.cuda.empty_cache()
